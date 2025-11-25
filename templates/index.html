@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔬 Material Science AI Assistant - DeepSeek</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .message-fade { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .loading { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- 头部 -->
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-microscope text-blue-600"></i>
+                Material Science AI Assistant
+            </h1>
+            <p class="text-xl text-gray-600">基于 DeepSeek 的智能材料科学分析助手</p>
+            <div class="flex justify-center gap-4 mt-4 text-sm">
+                <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full">
+                    <i class="fas fa-check-circle"></i> DeepSeek AI
+                </span>
+                <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
+                    <i class="fab fa-github"></i> GitHub分析
+                </span>
+                <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full">
+                    <i class="fas fa-file-alt"></i> 文档处理
+                </span>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
+            <!-- AI聊天区域 -->
+            <div class="bg-white rounded-2xl shadow-xl p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-robot text-blue-500 mr-3"></i>
+                    DeepSeek 材料科学助手
+                </h2>
+                
+                <div id="chat-container" class="h-96 overflow-y-auto mb-4 p-4 bg-gray-50 rounded-lg space-y-4">
+                    <div class="message-fade text-center text-gray-500">
+                        <i class="fas fa-comments text-2xl mb-2"></i>
+                        <p>欢迎！我是基于 DeepSeek 的材料科学助手，可以回答各种材料科学问题。</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 mb-4">
+                    <input type="text" id="question-input" 
+                           placeholder="输入材料科学问题，如：什么是形状记忆合金？"
+                           class="flex-1 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button onclick="sendQuestion()" 
+                            class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold transition-colors">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <button onclick="setExample('什么是形状记忆合金？')" 
+                            class="text-left text-sm text-blue-600 hover:text-blue-800 p-2 bg-blue-50 rounded-lg">
+                        <i class="fas fa-lightbulb mr-1"></i>形状记忆合金
+                    </button>
+                    <button onclick="setExample('高分子材料的力学性能如何测试？')" 
+                            class="text-left text-sm text-blue-600 hover:text-blue-800 p-2 bg-blue-50 rounded-lg">
+                        <i class="fas fa-lightbulb mr-1"></i>力学性能测试
+                    </button>
+                </div>
+            </div>
+
+            <!-- GitHub分析区域 -->
+            <div class="bg-white rounded-2xl shadow-xl p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fab fa-github text-gray-800 mr-3"></i>
+                    GitHub材料仓库分析
+                </h2>
+
+                <div class="flex gap-2 mb-4">
+                    <input type="text" id="repo-input" 
+                           placeholder="输入GitHub仓库URL，如：https://github.com/materialsproject/materialsproject"
+                           class="flex-1 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <button onclick="analyzeRepo()" 
+                            class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-semibold transition-colors">
+                        <i class="fas fa-chart-bar"></i>
+                    </button>
+                </div>
+
+                <div id="github-result" class="h-80 overflow-y-auto p-4 bg-gray-50 rounded-lg">
+                    <div class="text-center text-gray-500">
+                        <i class="fab fa-github text-2xl mb-2"></i>
+                        <p>输入GitHub仓库URL分析材料科学项目</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 文档处理区域 -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 lg:col-span-2">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-file-alt text-purple-500 mr-3"></i>
+                    材料科学文档处理
+                </h2>
+
+                <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center mb-4">
+                    <input type="file" id="file-input" 
+                           accept=".pdf,.docx,.txt,.md"
+                           class="hidden">
+                    <div class="space-y-4">
+                        <i class="fas fa-cloud-upload-alt text-3xl text-gray-400"></i>
+                        <p class="text-gray-600">上传材料科学文档 (PDF, Word, TXT, MD)</p>
+                        <button onclick="document.getElementById('file-input').click()" 
+                                class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold transition-colors">
+                            <i class="fas fa-upload mr-2"></i>选择文件
+                        </button>
+                    </div>
+                </div>
+
+                <div id="file-info" class="hidden mb-4 p-4 bg-blue-50 rounded-lg">
+                    <div class="flex justify-between items-center">
+                        <span id="file-name" class="font-semibold"></span>
+                        <button onclick="clearFile()" class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <button onclick="processDocument()" 
+                            class="flex-1 bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-xl font-semibold transition-colors">
+                        <i class="fas fa-cogs mr-2"></i>分析文档
+                    </button>
+                </div>
+
+                <div id="document-result" class="mt-4 p-4 bg-gray-50 rounded-lg hidden">
+                    <!-- 文档分析结果将显示在这里 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 系统状态 -->
+        <div class="mt-8 text-center space-y-2">
+            <div id="system-status" class="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow">
+                <i class="fas fa-circle text-green-500"></i>
+                <span class="text-sm text-gray-600">系统正常运行</span>
+            </div>
+            <div id="deepseek-status" class="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow">
+                <i class="fas fa-brain text-yellow-500"></i>
+                <span class="text-sm text-gray-600">检查 DeepSeek 状态...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 系统状态检查
+        async function checkSystemStatus() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                document.getElementById('system-status').innerHTML = `
+                    <i class="fas fa-circle text-green-500"></i>
+                    <span class="text-sm text-gray-600">${data.service} - 正常运行</span>
+                `;
+            } catch (error) {
+                document.getElementById('system-status').innerHTML = `
+                    <i class="fas fa-circle text-red-500"></i>
+                    <span class="text-sm text-gray-600">系统连接失败</span>
+                `;
+            }
+        }
+
+        // 检查DeepSeek状态
+        async function checkDeepSeekStatus() {
+            try {
+                const response = await fetch('/api/deepseek/status');
+                const data = await response.json();
+                
+                const statusElement = document.getElementById('deepseek-status');
+                if (statusElement) {
+                    if (data.status === 'connected') {
+                        statusElement.innerHTML = `
+                            <i class="fas fa-brain text-green-500"></i>
+                            <span class="text-sm text-gray-600">DeepSeek AI 已连接</span>
+                        `;
+                    } else {
+                        statusElement.innerHTML = `
+                            <i class="fas fa-brain text-red-500"></i>
+                            <span class="text-sm text-gray-600">DeepSeek AI 未连接</span>
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.error('DeepSeek状态检查失败:', error);
+            }
+        }
+
+        // AI聊天功能
+        async function sendQuestion() {
+            const question = document.getElementById('question-input').value.trim();
+            if (!question) return;
+
+            const chatContainer = document.getElementById('chat-container');
+            
+            // 添加用户消息
+            const userMessage = document.createElement('div');
+            userMessage.className = 'message-fade flex justify-end';
+            userMessage.innerHTML = `
+                <div class="bg-blue-500 text-white rounded-2xl rounded-tr-none px-4 py-2 max-w-xs">
+                    <div class="font-semibold">您</div>
+                    <div>${question}</div>
+                </div>
+            `;
+            chatContainer.appendChild(userMessage);
+
+            // 清空输入框
+            document.getElementById('question-input').value = '';
+
+            // 添加加载指示器
+            const loadingMessage = document.createElement('div');
+            loadingMessage.className = 'message-fade flex justify-start';
+            loadingMessage.innerHTML = `
+                <div class="bg-gray-200 rounded-2xl rounded-tl-none px-4 py-2">
+                    <div class="flex items-center gap-2">
+                        <div class="loading w-2 h-2 bg-gray-600 rounded-full"></div>
+                        <div class="loading w-2 h-2 bg-gray-600 rounded-full"></div>
+                        <div class="loading w-2 h-2 bg-gray-600 rounded-full"></div>
+                        <span class="text-sm text-gray-600">DeepSeek AI 思考中...</span>
+                    </div>
+                </div>
+            `;
+            chatContainer.appendChild(loadingMessage);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({question})
+                });
+                
+                const data = await response.json();
+                
+                // 移除加载指示器
+                chatContainer.removeChild(loadingMessage);
+
+                // 添加AI回复
+                const aiMessage = document.createElement('div');
+                aiMessage.className = 'message-fade flex justify-start';
+                aiMessage.innerHTML = `
+                    <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-none px-4 py-2 max-w-2xl">
+                        <div class="font-semibold text-blue-600 flex items-center gap-2">
+                            <i class="fas fa-brain text-green-500"></i>
+                            DeepSeek AI
+                        </div>
+                        <div class="whitespace-pre-wrap mt-2">${data.answer}</div>
+                        <div class="mt-2 text-xs text-gray-500">
+                            <i class="fas fa-database"></i> 来源: ${data.sources.join(', ')}
+                        </div>
+                    </div>
+                `;
+                chatContainer.appendChild(aiMessage);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            } catch (error) {
+                chatContainer.removeChild(loadingMessage);
+                alert('发送问题失败: ' + error.message);
+            }
+        }
+
+        // GitHub分析功能
+        async function analyzeRepo() {
+            const repoUrl = document.getElementById('repo-input').value.trim();
+            if (!repoUrl) return;
+
+            const resultContainer = document.getElementById('github-result');
+            resultContainer.innerHTML = `
+                <div class="flex justify-center items-center h-16">
+                    <div class="loading text-gray-600">
+                        <i class="fas fa-spinner fa-spin mr-2"></i>分析仓库中...
+                    </div>
+                </div>
+            `;
+
+            try {
+                const response = await fetch('/api/github/analyze', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({repo_url: repoUrl})
+                });
+                
+                const data = await response.json();
+                
+                if (data.analysis.error) {
+                    resultContainer.innerHTML = `
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <div class="text-red-800 font-semibold">分析失败</div>
+                            <div class="text-red-600">${data.analysis.error}</div>
+                        </div>
+                    `;
+                } else {
+                    const analysis = data.analysis;
+                    resultContainer.innerHTML = `
+                        <div class="space-y-4">
+                            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                                <h3 class="font-semibold text-green-800 mb-2">${analysis.repo_info.name}</h3>
+                                <p class="text-green-700">${analysis.repo_info.description || '无描述'}</p>
+                                <a href="${analysis.repo_info.url}" target="_blank" class="text-blue-600 hover:underline text-sm">
+                                    <i class="fab fa-github"></i> 访问仓库
+                                </a>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div class="text-center p-3 bg-blue-50 rounded-lg">
+                                    <div class="text-2xl font-bold text-blue-600">${analysis.repo_info.stars}</div>
+                                    <div class="text-sm text-blue-800">Stars</div>
+                                </div>
+                                <div class="text-center p-3 bg-green-50 rounded-lg">
+                                    <div class="text-2xl font-bold text-green-600">${analysis.repo_info.forks}</div>
+                                    <div class="text-sm text-green-800">Forks</div>
+                                </div>
+                                <div class="text-center p-3 bg-purple-50 rounded-lg">
+                                    <div class="text-2xl font-bold text-purple-600">${analysis.repo_info.language || 'N/A'}</div>
+                                    <div class="text-sm text-purple-800">语言</div>
+                                </div>
+                                <div class="text-center p-3 bg-orange-50 rounded-lg">
+                                    <div class="text-2xl font-bold text-orange-600">${analysis.material_analysis.is_material_related ? '✅' : '❌'}</div>
+                                    <div class="text-sm text-orange-800">材料相关</div>
+                                </div>
+                            </div>
+                            
+                            ${analysis.material_analysis.material_files.length > 0 ? `
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                <h4 class="font-semibold text-yellow-800 mb-2">材料相关文件</h4>
+                                <div class="text-sm text-yellow-700">
+                                    ${analysis.material_analysis.material_files.map(file => `<div>• ${file}</div>`).join('')}
+                                </div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultContainer.innerHTML = `
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div class="text-red-800 font-semibold">请求失败</div>
+                        <div class="text-red-600">${error.message}</div>
+                    </div>
+                `;
+            }
+        }
+
+        // 文档处理功能
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const fileInfo = document.getElementById('file-info');
+                const fileName = document.getElementById('file-name');
+                
+                fileName.textContent = file.name;
+                fileInfo.classList.remove('hidden');
+            }
+        });
+
+        function clearFile() {
+            document.getElementById('file-input').value = '';
+            document.getElementById('file-info').classList.add('hidden');
+        }
+
+        async function processDocument() {
+            const fileInput = document.getElementById('file-input');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('请先选择文件');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const resultContainer = document.getElementById('document-result');
+            resultContainer.innerHTML = `
+                <div class="flex justify-center items-center h-16">
+                    <div class="loading text-gray-600">
+                        <i class="fas fa-spinner fa-spin mr-2"></i>处理文档中...
+                    </div>
+                </div>
+            `;
+            resultContainer.classList.remove('hidden');
+
+            try {
+                const response = await fetch('/api/documents/process', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.analysis.error) {
+                    resultContainer.innerHTML = `
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <div class="text-red-800 font-semibold">处理失败</div>
+                            <div class="text-red-600">${data.analysis.error}</div>
+                        </div>
+                    `;
+                } else {
+                    const analysis = data.analysis;
+                    resultContainer.innerHTML = `
+                        <div class="space-y-4">
+                            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                                <h3 class="font-semibold text-green-800 mb-2">文档分析完成</h3>
+                                <p class="text-green-700">成功处理文档: ${data.filename}</p>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <div class="text-center p-3 bg-blue-50 rounded-lg">
+                                    <div class="text-2xl font-bold text-blue-600">${analysis.length}</div>
+                                    <div class="text-sm text-blue-800">字符数</div>
+                                </div>
+                                <div class="text-center p-3 bg-green-50 rounded-lg">
+                                    <div class="text-2xl font-bold text-green-600">${analysis.categories.length}</div>
+                                    <div class="text-sm text-green-800">材料类别</div>
+                                </div>
+                                <div class="text-center p-3 bg-purple-50 rounded-lg">
+                                    <div class="text-2xl font-bold text-purple-600">${Object.keys(analysis.keyword_density).length}</div>
+                                    <div class="text-sm text-purple-800">关键词类型</div>
+                                </div>
+                            </div>
+                            
+                            ${analysis.categories.length > 0 ? `
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                <h4 class="font-semibold text-yellow-800 mb-2">识别到的材料类别</h4>
+                                <div class="flex flex-wrap gap-2">
+                                    ${analysis.categories.map(cat => `
+                                        <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm">
+                                            ${cat}
+                                        </span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            ` : ''}
+                            
+                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                <h4 class="font-semibold text-gray-800 mb-2">内容摘要</h4>
+                                <p class="text-gray-700 text-sm">${analysis.summary}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultContainer.innerHTML = `
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div class="text-red-800 font-semibold">处理失败</div>
+                        <div class="text-red-600">${error.message}</div>
+                    </div>
+                `;
+            }
+        }
+
+        // 工具函数
+        function setExample(question) {
+            document.getElementById('question-input').value = question;
+        }
+
+        // 回车发送消息
+        document.getElementById('question-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendQuestion();
+            }
+        });
+
+        // 初始化
+        checkSystemStatus();
+        checkDeepSeekStatus();
+        setInterval(checkSystemStatus, 30000);
+        setInterval(checkDeepSeekStatus, 45000);
+    </script>
+</body>
+</html>
